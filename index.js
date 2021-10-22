@@ -49,8 +49,8 @@ app.post('/', async (req, res) => {
         transaction_id: result.ID,
         status: result.STAGE_ID,
         revenue: parseFloat(result.OPPORTUNITY),
-        user_id: result.CONTACT_ID,
-        client_id: result.COMPANY_ID,
+        user_id: result.CONTACT_ID, // QUESTION: if client_id is not company_id, then should user_id be contact_id or company_id? (Probably both, combined through a dot, as examples from rick.ai suggest)
+        client_id: result.COMPANY_ID, // Client ID should not be company ID: it's just an identifier probably given by a website where the client fills the form
         deal_method: result.TYPE_ID,
       }
     : { status: 'удалена' };
