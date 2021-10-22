@@ -9,27 +9,9 @@ app.use(express.urlencoded({ extended: true }));
 
 axios({
   method: 'get',
-  url: 'https://b24-sp9gpy.bitrix24.ru/rest/crm.deal.get?auth=8ng5pm4ym2r3hy4rapplypfhx7r99ze9&ID=275',
-  // auth: {
-  //   domain: 'b24-sp9gpy.bitrix24.ru',
-  //   client_endpoint: 'https://b24-sp9gpy.bitrix24.ru/rest/',
-  //   server_endpoint: 'https://oauth.bitrix.info/rest/',
-  //   member_id: 'f48783b2455adff9acdc00f3e6b2d78f',
-  //   application_token: '8ng5pm4ym2r3hy4rapplypfhx7r99ze9',
-  // },
-  data: {
-    // id: 275,
-    // auth: {
-    //   // domain: 'b24-sp9gpy.bitrix24.ru',
-    //   // client_endpoint: 'https://b24-sp9gpy.bitrix24.ru/rest/',
-    //   // server_endpoint: 'https://oauth.bitrix.info/rest/',
-    //   // member_id: 'f48783b2455adff9acdc00f3e6b2d78f',
-    //   application_token: '8ng5pm4ym2r3hy4rapplypfhx7r99ze9',
-    // },
-    auth: '8ng5pm4ym2r3hy4rapplypfhx7r99ze9',
-  },
+  url: 'https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/crm.deal.get?ID=279',
 }).then((result) => {
-  console.log(result);
+  console.log(result.data);
 });
 
 app.post('/', async (req, res) => {
