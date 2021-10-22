@@ -13,59 +13,61 @@ const events = {
   ONCRMDEALDELETE: 'delete',
 };
 
+async function crmDealGet(ID) {
+  try {
+    const apiResponse = await axios({
+      method: 'get',
+      url: `https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/crm.deal.get?ID=${ID}`,
+    });
+
+    return apiResponse?.data?.result;
+  } catch (error) {
+    console.log(error?.data);
+    return null;
+  }
+}
+
 app.post('/', async (req, res) => {
   const { body } = req;
 
-  console.log(body);
+  const bitrixEventType = events[body.event];
+  const dealIsNew = bitrixEventType === events.ONCRMDEALADD;
 
-  const eventType = events[body.event];
-  const dealIsNew = eventType === 'create';
+  const rickEvent = dealIsNew ? events.ONCRMDEALADD : events.ONCRMDEALUPDATE;
 
-  if (dealIsNew || eventType === 'update') {
-    const apiResponse = await axios({
-      method: 'get',
-      url: `https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/crm.deal.get?ID=${body.data.FIELDS.ID}`,
-    });
+  const initialData = {
+    transaction_id: body.data.FIELDS.ID,
+    data_source: 'bitrix24',
+    [`deal_${rickEvent}d_at`]: parseInt(body.ts),
+  };
 
-    const { result } = apiResponse.data;
+  const dealIsDeleted = bitrixEventType === events.ONCRMDEALDELETE;
 
-    await axios({
-      method: 'post',
-      url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${eventType}`,
-      data: {
+  const result = dealIsDeleted ? null : await crmDealGet(body.data.FIELDS.ID);
+
+  const dealData = result
+    ? {
         transaction_id: result.ID,
         status: result.STAGE_ID,
         revenue: parseFloat(result.OPPORTUNITY),
         user_id: result.CONTACT_ID,
         client_id: result.COMPANY_ID,
         deal_method: result.TYPE_ID,
-        data_source: 'bitrix24',
-        [`deal_${dealIsNew ? 'created' : 'updated'}_at`]: parseInt(body.ts),
-      },
-    });
+      }
+    : { status: 'удалена' };
 
-    return res.sendStatus(200);
-  }
+  const data = {
+    ...initialData,
+    ...dealData,
+  };
 
-  if (eventType === 'delete') {
-    await axios({
-      method: 'post',
-      url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${'update'}`,
-      data: {
-        transaction_id: body.data.FIELDS.ID,
-        status: 'удалена',
-        // revenue: parseFloat(result.OPPORTUNITY),
-        // user_id: result.CONTACT_ID,
-        // client_id: result.COMPANY_ID,
-        // deal_method: result.TYPE_ID,
-        data_source: 'bitrix24',
-        [`deal_${dealIsNew ? 'created' : 'updated'}_at`]: parseInt(body.ts),
-      },
-    });
+  await axios({
+    method: 'post',
+    url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${rickEvent}`,
+    data,
+  });
 
-    res.sendStatus(200);
-    return;
-  }
+  res.sendStatus(200);
 });
 
 app.listen(PORT, () => {
