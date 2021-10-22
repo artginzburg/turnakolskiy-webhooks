@@ -7,35 +7,65 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
-axios({
-  method: 'get',
-  url: 'https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/crm.deal.get?ID=279',
-}).then((result) => {
-  console.log(result.data);
-});
+const events = {
+  ONCRMDEALADD: 'create',
+  ONCRMDEALUPDATE: 'update',
+  ONCRMDEALDELETE: 'delete',
+};
 
 app.post('/', async (req, res) => {
   const { body } = req;
 
   console.log(body);
 
-  res.sendStatus(200);
+  const eventType = events[body.event];
+  const dealIsNew = eventType === 'create';
 
-  // try {
-  //   if (!body || !Object.keys(body).length) {
-  //     return res.sendStatus(400);
-  //   }
+  if (dealIsNew || eventType === 'update') {
+    const apiResponse = await axios({
+      method: 'get',
+      url: `https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/crm.deal.get?ID=${body.data.FIELDS.ID}`,
+    });
 
-  //   await axios({
-  //     method: 'post',
-  //     url: req.params.url,
-  //     data: body,
-  //   });
-  //   res.sendStatus(200);
-  // } catch (error) {
-  //   console.log(error);
-  //   res.sendStatus(500);
-  // }
+    const { result } = apiResponse.data;
+
+    await axios({
+      method: 'post',
+      url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${eventType}`,
+      data: {
+        transaction_id: result.ID,
+        status: result.STAGE_ID,
+        revenue: parseFloat(result.OPPORTUNITY),
+        user_id: result.CONTACT_ID,
+        client_id: result.COMPANY_ID,
+        deal_method: result.TYPE_ID,
+        data_source: 'bitrix24',
+        [`deal_${dealIsNew ? 'created' : 'updated'}_at`]: parseInt(body.ts),
+      },
+    });
+
+    return res.sendStatus(200);
+  }
+
+  if (eventType === 'delete') {
+    await axios({
+      method: 'post',
+      url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${'update'}`,
+      data: {
+        transaction_id: body.data.FIELDS.ID,
+        status: 'удалена',
+        // revenue: parseFloat(result.OPPORTUNITY),
+        // user_id: result.CONTACT_ID,
+        // client_id: result.COMPANY_ID,
+        // deal_method: result.TYPE_ID,
+        data_source: 'bitrix24',
+        [`deal_${dealIsNew ? 'created' : 'updated'}_at`]: parseInt(body.ts),
+      },
+    });
+
+    res.sendStatus(200);
+    return;
+  }
 });
 
 app.listen(PORT, () => {
