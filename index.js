@@ -33,17 +33,16 @@ app.post('/', async (req, res) => {
   const bitrixEventType = events[body.event];
   const dealIsNew = bitrixEventType === events.ONCRMDEALADD;
 
-  const rickEvent = dealIsNew ? events.ONCRMDEALADD : events.ONCRMDEALUPDATE;
+  const rickEventType = dealIsNew ? events.ONCRMDEALADD : events.ONCRMDEALUPDATE;
 
   const initialData = {
     transaction_id: body.data.FIELDS.ID,
     data_source: 'bitrix24',
-    [`deal_${rickEvent}d_at`]: parseInt(body.ts),
+    [`deal_${rickEventType}d_at`]: parseInt(body.ts),
   };
 
-  const dealIsDeleted = bitrixEventType === events.ONCRMDEALDELETE;
-
-  const result = dealIsDeleted ? null : await crmDealGet(body.data.FIELDS.ID);
+  const dealIsBeingDeleted = bitrixEventType === events.ONCRMDEALDELETE;
+  const result = dealIsBeingDeleted ? null : await crmDealGet(body.data.FIELDS.ID);
 
   const dealData = result
     ? {
@@ -61,11 +60,15 @@ app.post('/', async (req, res) => {
     ...dealData,
   };
 
-  await axios({
-    method: 'post',
-    url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${rickEvent}`,
-    data,
-  });
+  try {
+    await axios({
+      method: 'post',
+      url: `https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/${rickEvent}`,
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 
   res.sendStatus(200);
 });
