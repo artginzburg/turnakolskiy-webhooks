@@ -11,10 +11,15 @@
   },
   "repository": "https://github.com/artginzburg/turnakolsky-webhooks",
   "scripts": {
-    "start": "node index"
+    "start": "node index",
+    "test": "concurrently \"npm:start\" \"lt -p 3000\""
   },
   "dependencies": {
     "axios": "^0.23.0",
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "concurrently": "^6.3.0",
+    "localtunnel": "^2.0.2"
   }
 }
