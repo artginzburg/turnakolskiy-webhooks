@@ -1,9 +1,17 @@
 const express = require('express');
 const axios = require('axios');
 
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const logResult = require('./functions/logResult');
+
 const config = {
   bitrixIncomingWebhook: 'https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/',
   rickAnalyticsEndpoint: 'https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/',
+};
+const events = {
+  ONCRMDEALADD: 'create',
+  ONCRMDEALUPDATE: 'update',
+  ONCRMDEALDELETE: 'delete',
 };
 
 const { PORT = 3000 } = process.env;
@@ -12,11 +20,7 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
-const events = {
-  ONCRMDEALADD: 'create',
-  ONCRMDEALUPDATE: 'update',
-  ONCRMDEALDELETE: 'delete',
-};
+app.use(requestLogger);
 
 async function crmDealGet(ID) {
   try {
@@ -49,6 +53,8 @@ app.post('/', async (req, res) => {
   const dealIsBeingDeleted = bitrixEventType === events.ONCRMDEALDELETE;
   const result = dealIsBeingDeleted ? null : await crmDealGet(body.data.FIELDS.ID);
 
+  logResult(result);
+
   const dealData = result
     ? {
         transaction_id: result.ID,
@@ -73,9 +79,21 @@ app.post('/', async (req, res) => {
     });
   } catch (error) {
     console.log('Rick.ai returned error:', error.response.data);
+    next(error);
   }
 
   res.sendStatus(200);
+});
+
+app.use(errorLogger);
+
+app.use((err, req, res, next) => {
+  const { response } = err;
+  console.log(err);
+  res
+    // .status(statusCode)
+    .send({ message: response.data });
+  next();
 });
 
 app.listen(PORT, () => {
