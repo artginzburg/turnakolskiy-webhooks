@@ -53,10 +53,10 @@ app.post('/', async (req, res) => {
     ? {
         transaction_id: result.ID,
         status: result.STAGE_ID,
-        revenue: parseFloat(result.OPPORTUNITY),
-        user_id: result.CONTACT_ID, // QUESTION: if client_id is not company_id, then should user_id be contact_id or company_id? (Probably both, combined through a dot, as examples from rick.ai suggest)
-        client_id: result.COMPANY_ID, // Client ID should not be company ID: it's just an identifier probably given by a website where the client fills the form
-        deal_method: result.TYPE_ID,
+        revenue: result.OPPORTUNITY ? parseFloat(result.OPPORTUNITY) : 0,
+        user_id: result.CONTACT_ID,
+        client_id: result.COOKIE_GA_CID, // TODO
+        deal_method: result.TYPE_ID ?? result.SOURCE_ID,
       }
     : { status: 'удалена' };
 
@@ -68,11 +68,11 @@ app.post('/', async (req, res) => {
   try {
     await axios({
       method: 'post',
-      url: `${config.rickAnalyticsEndpoint}${rickEvent}`,
+      url: `${config.rickAnalyticsEndpoint}${rickEventType}`,
       data,
     });
   } catch (error) {
-    console.log(error);
+    console.log('Rick.ai returned error:', error.response.data);
   }
 
   res.sendStatus(200);
