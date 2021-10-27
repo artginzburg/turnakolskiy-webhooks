@@ -61,7 +61,7 @@ app.post('/', async (req, res) => {
         status: result.STAGE_ID,
         revenue: result.OPPORTUNITY ? parseFloat(result.OPPORTUNITY) : 0,
         user_id: result.CONTACT_ID,
-        client_id: result.SOURCE_DESCRIPTION, // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
+        client_id: result.SOURCE_DESCRIPTION ?? '', // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
         deal_method: result.TYPE_ID ?? result.SOURCE_ID,
       }
     : { status: 'удалена' };
