@@ -3,7 +3,11 @@ const express = require('express');
 
 const { logResult, yesterday, dateToUNIX } = require('./functions');
 
-const { requestLogger, errorLogger } = require('./middlewares/logger');
+const isEnvDevelopment = process.env.NODE_ENV === 'development';
+
+if (isEnvDevelopment) {
+  const { requestLogger, errorLogger } = require('./middlewares/logger');
+}
 
 const { PORT = 3000 } = process.env;
 
@@ -101,7 +105,9 @@ async function parseResult(req, result) {
 
 const app = express();
 
-app.use(requestLogger);
+if (isEnvDevelopment) {
+  app.use(requestLogger);
+}
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -143,7 +149,9 @@ app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
   const dealIsBeingDeleted = bitrixEventType === events.ONCRMDEALDELETE;
   const result = dealIsBeingDeleted ? null : await crmDealGet(req, body.data.FIELDS.ID);
 
-  logResult(result);
+  if (isEnvDevelopment) {
+    logResult(result);
+  }
 
   const dealData = result ? await parseResult(req, result) : { status: 'удалена' };
 
@@ -166,7 +174,9 @@ app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
   res.sendStatus(200);
 });
 
-app.use(errorLogger);
+if (isEnvDevelopment) {
+  app.use(errorLogger);
+}
 
 app.use((err, req, res, next) => {
   const { response } = err;
@@ -177,8 +187,10 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT} !`);
-});
+if (isEnvDevelopment) {
+  app.listen(PORT, () => {
+    console.log(`API listening on http://localhost:${PORT} !`);
+  });
+}
 
 module.exports.endpoint = app;
