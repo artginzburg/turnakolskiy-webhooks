@@ -1,13 +1,12 @@
 {
-  "name": "turnakolsky-webhooks",
-  "private": true,
-  "version": "0.1.0",
+  "name": "@artginzburg/turnakolsky-webhooks",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "author": {
     "name": "Art Ginzburg",
     "email": "art.ginzburg@ya.ru",
-    "url": "https://artginzburg.github.io"
+    "url": "https://ginzburg.art"
   },
   "repository": "https://github.com/artginzburg/turnakolsky-webhooks",
   "scripts": {
@@ -16,12 +15,12 @@
   },
   "dependencies": {
     "axios": "^0.23.0",
-    "express": "^4.17.1",
-    "express-winston": "^4.2.0",
-    "winston": "^3.3.3"
+    "express": "^4.17.1"
   },
   "devDependencies": {
     "concurrently": "^6.3.0",
-    "localtunnel": "^2.0.2"
+    "localtunnel": "^2.0.2",
+    "express-winston": "^4.2.0",
+    "winston": "^3.3.3"
   }
 }
