@@ -50,6 +50,88 @@ async function crmDealProductrowsGet(ID) {
   }
 }
 
+async function crmDealList() {
+  yesterday = ((d) => {
+    d.setDate(d.getDate() - 1);
+    return d;
+  })(new Date());
+  const formattedYesterday = yesterday.toLocaleString('ru-RU');
+
+  const searchParams = `filter[>DATE_MODIFY]=${formattedYesterday}&select[]=*&select[]=UF_*`;
+
+  const dealListUrl = `${config.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
+
+  try {
+    const apiResponse = await axios({
+      method: 'get',
+      url: dealListUrl,
+    });
+
+    return apiResponse?.data?.result;
+  } catch (error) {
+    console.log(error?.data);
+    return [];
+  }
+}
+
+function dateToUNIX(dateString) {
+  return new Date(dateString).getTime() / 1000;
+}
+
+async function parseResult(result) {
+  return {
+    transaction_id: result.ID,
+    data_source: 'bitrix24',
+    status: result.STAGE_ID,
+    revenue: result.OPPORTUNITY ? parseFloat(result.OPPORTUNITY) : 0,
+    user_id: result.CONTACT_ID,
+    client_id: result.SOURCE_DESCRIPTION ?? '', // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
+    deal_url: `https://b24-sp9gpy.bitrix24.ru/crm/deal/details/${result.ID}/`,
+    deal_method: result.TYPE_ID ?? result.SOURCE_ID,
+    deal_created_at: dateToUNIX(result.DATE_CREATE),
+    deal_updated_at: dateToUNIX(result.DATE_MODIFY),
+    grossprofit: (() => {
+      const crmKeys = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
+
+      const grossprofitKeys = crmKeys.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
+
+      return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
+    })(),
+    items: await (async (ID) => {
+      const rawItems = await crmDealProductrowsGet(ID);
+      return rawItems.length
+        ? rawItems.map((item) => ({
+            name: item.PRODUCT_NAME,
+            sku: String(item.PRODUCT_ID),
+            price: String(item.PRICE),
+            quantity: item.QUANTITY,
+          }))
+        : undefined;
+    })(result.ID),
+  };
+}
+
+app.get('/check', async (req, res, next) => {
+  const dealList = await crmDealList();
+  const parsedDealList = [];
+  for (const deal of dealList) {
+    parsedDealList.push(await parseResult(deal));
+  }
+
+  try {
+    await axios({
+      method: 'post',
+      url: `${config.rickAnalyticsEndpoint}check`,
+      data: parsedDealList,
+    });
+  } catch (error) {
+    console.log('Rick.ai returned error:', error.response.data);
+    return next(error);
+  }
+
+  res.sendStatus(200);
+});
+
 app.post('/', async (req, res, next) => {
   const { body } = req;
 
@@ -69,35 +151,7 @@ app.post('/', async (req, res, next) => {
 
   logResult(result);
 
-  const dealData = result
-    ? {
-        transaction_id: result.ID,
-        status: result.STAGE_ID,
-        revenue: result.OPPORTUNITY ? parseFloat(result.OPPORTUNITY) : 0,
-        user_id: result.CONTACT_ID,
-        client_id: result.SOURCE_DESCRIPTION ?? '', // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
-        deal_url: `https://b24-sp9gpy.bitrix24.ru/crm/deal/details/${body.data.FIELDS.ID}/`,
-        deal_method: result.TYPE_ID ?? result.SOURCE_ID,
-        grossprofit: (() => {
-          const crmKeys = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
-
-          const grossprofitKeys = crmKeys.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
-
-          return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
-        })(),
-        items: await (async (ID) => {
-          const rawItems = await crmDealProductrowsGet(ID);
-          return rawItems.length
-            ? rawItems.map((item) => ({
-                name: item.PRODUCT_NAME,
-                sku: String(item.PRODUCT_ID),
-                price: String(item.PRICE),
-                quantity: item.QUANTITY,
-              }))
-            : undefined;
-        })(body.data.FIELDS.ID),
-      }
-    : { status: 'удалена' };
+  const dealData = result ? await parseResult(result) : { status: 'удалена' };
 
   const data = {
     ...initialData,
