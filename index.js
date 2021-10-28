@@ -22,6 +22,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(requestLogger);
 
+function yesterday() {
+  return ((d) => {
+    d.setDate(d.getDate() - 1);
+    return d;
+  })(new Date());
+}
+
 async function crmDealGet(ID) {
   try {
     const apiResponse = await axios({
@@ -50,14 +57,11 @@ async function crmDealProductrowsGet(ID) {
   }
 }
 
-async function crmDealList() {
-  yesterday = ((d) => {
-    d.setDate(d.getDate() - 1);
-    return d;
-  })(new Date());
-  const formattedYesterday = yesterday.toLocaleString('ru-RU');
+async function crmDealList(date) {
+  const fromDate = date ? new Date(date) : yesterday();
+  const formattedDate = fromDate.toLocaleString('ru-RU');
 
-  const searchParams = `filter[>DATE_MODIFY]=${formattedYesterday}&select[]=*&select[]=UF_*`;
+  const searchParams = `filter[>DATE_MODIFY]=${formattedDate}&select[]=*&select[]=UF_*`;
 
   const dealListUrl = `${config.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
@@ -111,8 +115,8 @@ async function parseResult(result) {
   };
 }
 
-app.get('/check', async (req, res, next) => {
-  const dealList = await crmDealList();
+app.get('/check/:date?', async (req, res, next) => {
+  const dealList = await crmDealList(req.params.date);
   const parsedDealList = [];
   for (const deal of dealList) {
     parsedDealList.push(await parseResult(deal));
