@@ -1,39 +1,27 @@
-const express = require('express');
 const axios = require('axios');
+const express = require('express');
+
+const { logResult, yesterday, dateToUNIX } = require('./functions');
 
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const logResult = require('./functions/logResult');
+
+const { PORT = 3000 } = process.env;
 
 const config = {
-  bitrixIncomingWebhook: 'https://b24-sp9gpy.bitrix24.ru/rest/571/j8f8intredn2w3d9/',
   rickAnalyticsEndpoint: 'https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/',
 };
+
 const events = {
   ONCRMDEALADD: 'create',
   ONCRMDEALUPDATE: 'update',
   ONCRMDEALDELETE: 'delete',
 };
 
-const { PORT = 3000 } = process.env;
-
-const app = express();
-
-app.use(express.urlencoded({ extended: true }));
-
-app.use(requestLogger);
-
-function yesterday() {
-  return ((d) => {
-    d.setDate(d.getDate() - 1);
-    return d;
-  })(new Date());
-}
-
-async function crmDealGet(ID) {
+async function crmDealGet(req, ID) {
   try {
     const apiResponse = await axios({
       method: 'get',
-      url: `${config.bitrixIncomingWebhook}crm.deal.get?ID=${ID}`,
+      url: `${req.params.bitrixIncomingWebhook}crm.deal.get?ID=${ID}`,
     });
 
     return apiResponse?.data?.result;
@@ -43,11 +31,11 @@ async function crmDealGet(ID) {
   }
 }
 
-async function crmDealProductrowsGet(ID) {
+async function crmDealProductrowsGet(req, ID) {
   try {
     const apiResponse = await axios({
       method: 'get',
-      url: `${config.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
+      url: `${req.params.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
     });
 
     return apiResponse?.data?.result;
@@ -57,13 +45,13 @@ async function crmDealProductrowsGet(ID) {
   }
 }
 
-async function crmDealList(date) {
+async function crmDealList(req, date) {
   const fromDate = date ? new Date(date) : yesterday();
   const formattedDate = fromDate.toLocaleString('ru-RU');
 
   const searchParams = `filter[>DATE_MODIFY]=${formattedDate}&select[]=*&select[]=UF_*`;
 
-  const dealListUrl = `${config.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
+  const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
   try {
     const apiResponse = await axios({
@@ -78,11 +66,7 @@ async function crmDealList(date) {
   }
 }
 
-function dateToUNIX(dateString) {
-  return new Date(dateString).getTime() / 1000;
-}
-
-async function parseResult(result) {
+async function parseResult(req, result) {
   return {
     transaction_id: result.ID,
     data_source: 'bitrix24',
@@ -102,7 +86,7 @@ async function parseResult(result) {
       return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
     })(),
     items: await (async (ID) => {
-      const rawItems = await crmDealProductrowsGet(ID);
+      const rawItems = await crmDealProductrowsGet(req, ID);
       return rawItems.length
         ? rawItems.map((item) => ({
             name: item.PRODUCT_NAME,
@@ -115,11 +99,17 @@ async function parseResult(result) {
   };
 }
 
-app.get('/check/:date?', async (req, res, next) => {
-  const dealList = await crmDealList(req.params.date);
+const app = express();
+
+app.use(requestLogger);
+
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/:bitrixIncomingWebhook/check/:date?', async (req, res, next) => {
+  const dealList = await crmDealList(req, req.params.date);
   const parsedDealList = [];
   for (const deal of dealList) {
-    parsedDealList.push(await parseResult(deal));
+    parsedDealList.push(await parseResult(req, deal));
   }
 
   try {
@@ -136,7 +126,7 @@ app.get('/check/:date?', async (req, res, next) => {
   res.sendStatus(200);
 });
 
-app.post('/', async (req, res, next) => {
+app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
   const { body } = req;
 
   const bitrixEventType = events[body.event];
@@ -151,11 +141,11 @@ app.post('/', async (req, res, next) => {
   };
 
   const dealIsBeingDeleted = bitrixEventType === events.ONCRMDEALDELETE;
-  const result = dealIsBeingDeleted ? null : await crmDealGet(body.data.FIELDS.ID);
+  const result = dealIsBeingDeleted ? null : await crmDealGet(req, body.data.FIELDS.ID);
 
   logResult(result);
 
-  const dealData = result ? await parseResult(result) : { status: 'удалена' };
+  const dealData = result ? await parseResult(req, result) : { status: 'удалена' };
 
   const data = {
     ...initialData,
