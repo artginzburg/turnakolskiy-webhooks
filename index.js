@@ -63,6 +63,13 @@ app.post('/', async (req, res) => {
         user_id: result.CONTACT_ID,
         client_id: result.SOURCE_DESCRIPTION ?? '', // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
         deal_method: result.TYPE_ID ?? result.SOURCE_ID,
+        grossprofit: (() => {
+          const crmKeys = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
+
+          const grossprofitKeys = crmKeys.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
+
+          return grossprofitKeys.length ? result[grossprofitKeys[0]] : '';
+        })(),
       }
     : { status: 'удалена' };
 
