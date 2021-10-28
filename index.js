@@ -36,7 +36,21 @@ async function crmDealGet(ID) {
   }
 }
 
-app.post('/', async (req, res) => {
+async function crmDealProductrowsGet(ID) {
+  try {
+    const apiResponse = await axios({
+      method: 'get',
+      url: `${config.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
+    });
+
+    return apiResponse?.data?.result;
+  } catch (error) {
+    console.log(error?.data);
+    return [];
+  }
+}
+
+app.post('/', async (req, res, next) => {
   const { body } = req;
 
   const bitrixEventType = events[body.event];
@@ -62,14 +76,26 @@ app.post('/', async (req, res) => {
         revenue: result.OPPORTUNITY ? parseFloat(result.OPPORTUNITY) : 0,
         user_id: result.CONTACT_ID,
         client_id: result.SOURCE_DESCRIPTION ?? '', // в это поле на фронтенде через Google Tag Manager записывается cookie _ga_cid
+        deal_url: `https://b24-sp9gpy.bitrix24.ru/crm/deal/details/${body.data.FIELDS.ID}/`,
         deal_method: result.TYPE_ID ?? result.SOURCE_ID,
         grossprofit: (() => {
           const crmKeys = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
 
           const grossprofitKeys = crmKeys.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
 
-          return grossprofitKeys.length ? result[grossprofitKeys[0]] : '';
+          return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
         })(),
+        items: await (async (ID) => {
+          const rawItems = await crmDealProductrowsGet(ID);
+          return rawItems.length
+            ? rawItems.map((item) => ({
+                name: item.PRODUCT_NAME,
+                sku: String(item.PRODUCT_ID),
+                price: String(item.PRICE),
+                quantity: item.QUANTITY,
+              }))
+            : undefined;
+        })(body.data.FIELDS.ID),
       }
     : { status: 'удалена' };
 
@@ -86,7 +112,7 @@ app.post('/', async (req, res) => {
     });
   } catch (error) {
     console.log('Rick.ai returned error:', error.response.data);
-    next(error);
+    return next(error);
   }
 
   res.sendStatus(200);
