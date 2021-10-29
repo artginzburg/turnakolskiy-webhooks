@@ -1,7 +1,7 @@
 {
   "name": "@artginzburg/turnakolsky-webhooks",
   "version": "0.2.1",
-  "description": "",
+  "description": "Serverless API for tur-na-kolskiy.ru, connecting Bitrix24 CRM to Rick.ai Analytics",
   "main": "index.js",
   "author": {
     "name": "Art Ginzburg",
