@@ -9,63 +9,64 @@ if (isEnvDevelopment) {
   const { requestLogger, errorLogger } = require('./middlewares/logger');
 }
 
-const { PORT = 3000 } = process.env;
-
 const config = {
   rickAnalyticsEndpoint: 'https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/',
 };
 
-const events = {
-  ONCRMDEALADD: 'create',
-  ONCRMDEALUPDATE: 'update',
-  ONCRMDEALDELETE: 'delete',
+const crm = {
+  events: {
+    ONCRMDEALADD: 'create',
+    ONCRMDEALUPDATE: 'update',
+    ONCRMDEALDELETE: 'delete',
+  },
+  deal: {
+    async get(req, ID) {
+      try {
+        const apiResponse = await axios({
+          url: `${req.params.bitrixIncomingWebhook}crm.deal.get?ID=${ID}`,
+        });
+
+        return apiResponse?.data?.result;
+      } catch (error) {
+        console.log(error?.data);
+        return null;
+      }
+    },
+    async list(req, date) {
+      const fromDate = date ? new Date(date) : yesterday();
+      const formattedDate = fromDate.toLocaleString('ru-RU');
+
+      const searchParams = `filter[>DATE_MODIFY]=${formattedDate}&select[]=*&select[]=UF_*`;
+
+      const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
+
+      try {
+        const apiResponse = await axios({
+          url: dealListUrl,
+        });
+
+        return apiResponse?.data?.result;
+      } catch (error) {
+        console.log(error?.data);
+        return [];
+      }
+    },
+    productrows: {
+      async get(req, ID) {
+        try {
+          const apiResponse = await axios({
+            url: `${req.params.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
+          });
+
+          return apiResponse?.data?.result;
+        } catch (error) {
+          console.log(error?.data);
+          return [];
+        }
+      },
+    },
+  },
 };
-
-async function crmDealGet(req, ID) {
-  try {
-    const apiResponse = await axios({
-      url: `${req.params.bitrixIncomingWebhook}crm.deal.get?ID=${ID}`,
-    });
-
-    return apiResponse?.data?.result;
-  } catch (error) {
-    console.log(error?.data);
-    return null;
-  }
-}
-
-async function crmDealProductrowsGet(req, ID) {
-  try {
-    const apiResponse = await axios({
-      url: `${req.params.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
-    });
-
-    return apiResponse?.data?.result;
-  } catch (error) {
-    console.log(error?.data);
-    return [];
-  }
-}
-
-async function crmDealList(req, date) {
-  const fromDate = date ? new Date(date) : yesterday();
-  const formattedDate = fromDate.toLocaleString('ru-RU');
-
-  const searchParams = `filter[>DATE_MODIFY]=${formattedDate}&select[]=*&select[]=UF_*`;
-
-  const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
-
-  try {
-    const apiResponse = await axios({
-      url: dealListUrl,
-    });
-
-    return apiResponse?.data?.result;
-  } catch (error) {
-    console.log(error?.data);
-    return [];
-  }
-}
 
 async function parseResult(req, result) {
   return {
@@ -81,13 +82,11 @@ async function parseResult(req, result) {
     deal_updated_at: dateToUNIX(result.DATE_MODIFY),
     grossprofit: (() => {
       const userFields = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
-
       const grossprofitKeys = userFields.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
-
       return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
     })(),
     items: await (async (ID) => {
-      const rawItems = await crmDealProductrowsGet(req, ID);
+      const rawItems = await crm.deal.productrows.get(req, ID);
       return rawItems.length
         ? rawItems.map((item) => ({
             name: item.PRODUCT_NAME,
@@ -109,7 +108,7 @@ if (isEnvDevelopment) {
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/:bitrixIncomingWebhook/check/:date?', async (req, res, next) => {
-  const dealList = await crmDealList(req, req.params.date);
+  const dealList = await crm.deal.list(req, req.params.date);
   const parsedDealList = [];
   for (const deal of dealList) {
     parsedDealList.push(await parseResult(req, deal));
@@ -132,10 +131,10 @@ app.get('/:bitrixIncomingWebhook/check/:date?', async (req, res, next) => {
 app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
   const { body } = req;
 
-  const bitrixEventType = events[body.event];
-  const dealIsNew = bitrixEventType === events.ONCRMDEALADD;
+  const bitrixEventType = crm.events[body.event];
+  const dealIsNew = bitrixEventType === crm.events.ONCRMDEALADD;
 
-  const rickEventType = dealIsNew ? events.ONCRMDEALADD : events.ONCRMDEALUPDATE;
+  const rickEventType = dealIsNew ? crm.events.ONCRMDEALADD : crm.events.ONCRMDEALUPDATE;
 
   const initialData = {
     transaction_id: body.data.FIELDS.ID,
@@ -143,8 +142,8 @@ app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
     [`deal_${rickEventType}d_at`]: parseInt(body.ts),
   };
 
-  const dealIsBeingDeleted = bitrixEventType === events.ONCRMDEALDELETE;
-  const result = dealIsBeingDeleted ? null : await crmDealGet(req, body.data.FIELDS.ID);
+  const dealIsBeingDeleted = bitrixEventType === crm.events.ONCRMDEALDELETE;
+  const result = dealIsBeingDeleted ? null : await crm.deal.get(req, body.data.FIELDS.ID);
 
   if (isEnvDevelopment) {
     logResult(result);
