@@ -3,7 +3,9 @@ const express = require('express');
 
 const { logResult, yesterday, dateToUNIX } = require('./functions');
 
-const isEnvDevelopment = process.env.NODE_ENV === 'development';
+const { PORT = 3000, NODE_ENV } = process.env;
+
+const isEnvDevelopment = NODE_ENV === 'development';
 
 if (isEnvDevelopment) {
   const { requestLogger, errorLogger } = require('./middlewares/logger');
