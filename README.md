@@ -24,13 +24,19 @@
 
    - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolsky-webhooks/branches/master/:bitrixIncomingWebhook`
 
-   - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL](https://meyerweb.com/eric/tools/dencoder/)
+   - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL-encoded](https://meyerweb.com/eric/tools/dencoder/)
 
      > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolsky-webhooks/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F`
 
    - Нажать "Сохранить"
 
-## Тест
+3. Создать переменную окружения BITRIX_INCOMING_WEBHOOK в репозитории
+
+   - `Settings` > `Secrets` > `New repository secret`
+
+   - Опять же, вставить URL входящего вебхука из пункта 1 в формате URL-encoded
+
+### Тест
 
 Установить зависимости
 
