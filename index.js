@@ -80,9 +80,9 @@ async function parseResult(req, result) {
     deal_created_at: dateToUNIX(result.DATE_CREATE),
     deal_updated_at: dateToUNIX(result.DATE_MODIFY),
     grossprofit: (() => {
-      const crmKeys = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
+      const userFields = Object.keys(result).filter((key) => key.includes('UF_CRM_'));
 
-      const grossprofitKeys = crmKeys.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
+      const grossprofitKeys = userFields.filter((crmKey) => /^[0-9]+$/.test(result[crmKey]));
 
       return grossprofitKeys.length ? result[grossprofitKeys[0]] : undefined;
     })(),
