@@ -22,9 +22,11 @@
 
    - В настройке событий выбрать 3 пункта: `Создание сделки (ONCRMDEALADD), Обновление сделки (ONCRMDEALUPDATE), Удаление сделки (ONCRMDEALDELETE)`
 
-   - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolskiy-webhooks/branches/master/:bitrixIncomingWebhook`, заменив `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1
+   - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolsky-webhooks/branches/master/:bitrixIncomingWebhook`
 
-     > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-webhooks/branches/master/https://b24-ep1gyi.bitrix24.ru/rest/421/j9f2incnbdn2r3d5/`
+   - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL](https://meyerweb.com/eric/tools/dencoder/)
+
+     > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolsky-webhooks/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F`
 
    - Нажать "Сохранить"
 
