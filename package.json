@@ -1,5 +1,5 @@
 {
-  "name": "@artginzburg/turnakolsky-webhooks",
+  "name": "@artginzburg/turnakolskiy-webhooks",
   "version": "0.2.1",
   "description": "Serverless API for tur-na-kolskiy.ru, connecting Bitrix24 CRM to Rick.ai Analytics",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "email": "art.ginzburg@ya.ru",
     "url": "https://ginzburg.art"
   },
-  "repository": "https://github.com/artginzburg/turnakolsky-webhooks",
+  "repository": "https://github.com/artginzburg/turnakolskiy-webhooks",
   "scripts": {
     "start": "node index",
     "test": "concurrently \"npm:start\" \"lt -p 3000\""
