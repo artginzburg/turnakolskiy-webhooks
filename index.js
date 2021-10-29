@@ -24,7 +24,6 @@ const events = {
 async function crmDealGet(req, ID) {
   try {
     const apiResponse = await axios({
-      method: 'get',
       url: `${req.params.bitrixIncomingWebhook}crm.deal.get?ID=${ID}`,
     });
 
@@ -38,7 +37,6 @@ async function crmDealGet(req, ID) {
 async function crmDealProductrowsGet(req, ID) {
   try {
     const apiResponse = await axios({
-      method: 'get',
       url: `${req.params.bitrixIncomingWebhook}crm.deal.productrows.get?ID=${ID}`,
     });
 
@@ -59,7 +57,6 @@ async function crmDealList(req, date) {
 
   try {
     const apiResponse = await axios({
-      method: 'get',
       url: dealListUrl,
     });
 
