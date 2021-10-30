@@ -22,11 +22,11 @@
 
    - В настройке событий выбрать 3 пункта: `Создание сделки (ONCRMDEALADD), Обновление сделки (ONCRMDEALUPDATE), Удаление сделки (ONCRMDEALDELETE)`
 
-   - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolskiy-webhooks/branches/master/:bitrixIncomingWebhook`
+   - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolskiy-api/branches/master/:bitrixIncomingWebhook`
 
    - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL-encoded](https://meyerweb.com/eric/tools/dencoder/)
 
-     > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-webhooks/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F`
+     > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-api/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F`
 
    - Нажать "Сохранить"
 
@@ -42,7 +42,7 @@
 
 - Дописать в конец строки `/check/:date`, заменив `:date` на дату, с которой нужно проверить все сделки.
 
-  > Например, для проверки сделок с 1-го сентября 2021-го должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-webhooks/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F/check/01.09.2021`
+  > Например, для проверки сделок с 1-го сентября 2021-го должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-api/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F/check/01.09.2021`
 
 - Также можно дописать время через запятую, например `.../check/01.09.2021,23:00`. Учтите, что время указывается в формате UTC, то есть `01.09.2021,23:00` на самом деле проверит сделки, обновлённые с `02.09.2021,02:00` по Москве (GMT+3)
 
