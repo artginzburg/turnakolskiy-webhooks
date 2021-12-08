@@ -24,17 +24,17 @@
 
    - В поле "URL вашего обработчика" вставить `https://artginzburg.runkit.io/turnakolskiy-api/branches/master/:bitrixIncomingWebhook`
 
-   - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL-encoded](https://meyerweb.com/eric/tools/dencoder/)
+   - Заменить `:bitrixIncomingWebhook` на URL входящего вебхука из пункта 1 в [формате URL-encoded][urlencode]
 
      > Должно получиться что-то вроде: `https://artginzburg.runkit.io/turnakolskiy-api/branches/master/https%3A%2F%2Fb24-ep1gyi.bitrix24.ru%2Frest%2F421%2Fj9f2incnbdn2r3d5%2F`
 
    - Нажать "Сохранить"
 
-3. Создать переменную окружения BITRIX_INCOMING_WEBHOOK в репозитории
+3. Создать переменную окружения [BITRIX_INCOMING_WEBHOOK](https://github.com/artginzburg/turnakolskiy-webhooks/settings/secrets/actions/BITRIX_INCOMING_WEBHOOK) в репозитории
 
-   - `Settings` > `Secrets` > `New repository secret`
+   - `Settings` > [`Secrets`](https://github.com/artginzburg/turnakolskiy-webhooks/settings/secrets/actions) > [`New repository secret`](https://github.com/artginzburg/turnakolskiy-webhooks/settings/secrets/actions/new)
 
-   - Опять же, вставить URL входящего вебхука из пункта 1 в формате URL-encoded
+   - Опять же, вставить URL входящего вебхука из пункта 1 в [формате URL-encoded][urlencode]
 
 ## Отправить /check с любой даты
 
@@ -65,3 +65,5 @@ npm test
 Скопировать ссылку на локальный туннель, вставить её в исходящий вебхук на события ONCRMDEALADD, ONCRMDEALUPDATE, ONCRMDEALDELETE
 
 Попробовать создать новую сделку, сохранить, обновить в ней какие-нибудь данные, и удалить её. Если в мониторинг сервиса аналитики пришли данные о сделке и в консоли не появляется ошибок — всё работает правильно.
+
+[urlencode]: https://meyerweb.com/eric/tools/dencoder/
