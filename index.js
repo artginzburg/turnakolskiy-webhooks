@@ -7,9 +7,7 @@ const { PORT = 3000, NODE_ENV } = process.env;
 
 const isEnvDevelopment = NODE_ENV === 'development';
 
-if (isEnvDevelopment) {
-  const { requestLogger, errorLogger } = require('./middlewares/logger');
-}
+const { requestLogger, errorLogger } = isEnvDevelopment ? require('./middlewares/logger') : {};
 
 const config = {
   rickAnalyticsEndpoint: 'https://exchange.rick.ai/transactions/tur-na-kolskiy-ru/',
