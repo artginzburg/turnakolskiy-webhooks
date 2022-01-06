@@ -12,7 +12,7 @@ if (!UPDATE_FROM_DATE) {
 
 updateDeals({
   params: {
-    bitrixIncomingWebhook: BITRIX_INCOMING_WEBHOOK,
+    bitrixIncomingWebhook: decodeURIComponent(BITRIX_INCOMING_WEBHOOK),
     date: UPDATE_FROM_DATE,
   },
 });
