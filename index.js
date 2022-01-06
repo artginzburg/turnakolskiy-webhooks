@@ -108,11 +108,16 @@ if (isEnvDevelopment) {
 app.use(express.urlencoded({ extended: true }));
 
 const params = {
-  bitrixIncomingWebhook: ':bitrixIncomingWebhook',
-  date: ':date?',
+  bitrixIncomingWebhook: '/:bitrixIncomingWebhook',
+  date: '/:date?',
 };
 
-app.get(`/${params.bitrixIncomingWebhook}/check/${params.date}`, async (req, res, next) => {
+const routes = {
+  check: 'check',
+  update: 'update',
+};
+
+app.get(`${params.bitrixIncomingWebhook}/${routes.check}${params.date}`, async (req, res, next) => {
   const dealList = await crm.deal.list(req, req.params.date);
   const parsedDealList = [];
   for (const deal of dealList) {
@@ -122,7 +127,7 @@ app.get(`/${params.bitrixIncomingWebhook}/check/${params.date}`, async (req, res
   try {
     await axios({
       method: 'post',
-      url: `${config.rickAnalyticsEndpoint}check`,
+      url: `${config.rickAnalyticsEndpoint}${routes.check}`,
       data: parsedDealList,
     });
   } catch (error) {
@@ -132,6 +137,37 @@ app.get(`/${params.bitrixIncomingWebhook}/check/${params.date}`, async (req, res
 
   res.sendStatus(200);
 });
+
+async function updateDeals(req, res = undefined, next = console.error) {
+  const dealList = await crm.deal.list(req, req.params.date);
+
+  if (!dealList.length) {
+    return next('No deals between the specified date and today.');
+  }
+
+  for (let i = 0; i < dealList.length; i++) {
+    const deal = dealList[i];
+    const parsedDeal = await parseResult(req, deal);
+
+    try {
+      await axios({
+        method: 'post',
+        url: `${config.rickAnalyticsEndpoint}${routes.update}`,
+        data: parsedDeal,
+      });
+    } catch (error) {
+      console.log('Rick.ai returned error:', error.response.data);
+      i--; // retry sending request if it fails
+    }
+  }
+
+  res?.sendStatus(200);
+}
+
+// Это метод /update. Он похож на /check, но отправляет список сделок не в виде массива одним запросом на /check, а каждую сделку из массива отдельным запросом на /update.
+// TODO теперь вопрос: как сделать, чтобы, допустим, 2000 маленьких запросов выполнились за минуту? Ответ: никак. Значит, надо отправить столько запросов, сколько успеется, а под конец перезапустить изначальный запрос. И повторять так, пока все маленькие запросы не отправятся. Чё-нить придумаю.
+// в идеале, можно было бы узнать через сервис аналитики, какие сделки зафакапились, и обновлять только их. Но чёт не сегодня :)
+app.get(`${params.bitrixIncomingWebhook}/${routes.update}${params.date}`, updateDeals);
 
 app.post(`/${params.bitrixIncomingWebhook}`, async (req, res, next) => {
   const { body } = req;
@@ -195,3 +231,4 @@ if (isEnvDevelopment) {
 }
 
 module.exports.endpoint = app;
+module.exports.updateDeals = updateDeals;
