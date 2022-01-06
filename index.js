@@ -101,11 +101,6 @@ async function parseResult(req, result) {
 
 const app = express();
 
-app.param('bitrixIncomingWebhook', function(req, res, next, bitrixIncomingWebhook) {
-  req.bitrixIncomingWebhook = decodeURIComponent(bitrixIncomingWebhook);
-  next();
-});
-
 if (isEnvDevelopment) {
   app.use(requestLogger);
 }
