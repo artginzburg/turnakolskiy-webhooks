@@ -40,14 +40,24 @@ const crm = {
 
       const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
+      // if (isEnvDevelopment) {
+      console.log('dealListUrl: ', dealListUrl);
+      // }
+
       try {
         const apiResponse = await axios({
           url: dealListUrl,
         });
 
+        // if (isEnvDevelopment) {
+        console.log('apiResponse: ', apiResponse);
+        // }
+
         return apiResponse?.data?.result;
       } catch (error) {
-        console.log(error?.data);
+        if (error) {
+          console.log(error?.data);
+        }
         return [];
       }
     },
