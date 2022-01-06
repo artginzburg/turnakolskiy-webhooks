@@ -107,7 +107,12 @@ if (isEnvDevelopment) {
 
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/:bitrixIncomingWebhook/check/:date?', async (req, res, next) => {
+const params = {
+  bitrixIncomingWebhook: ':bitrixIncomingWebhook',
+  date: ':date?',
+};
+
+app.get(`/${params.bitrixIncomingWebhook}/check/${params.date}`, async (req, res, next) => {
   const dealList = await crm.deal.list(req, req.params.date);
   const parsedDealList = [];
   for (const deal of dealList) {
@@ -128,7 +133,7 @@ app.get('/:bitrixIncomingWebhook/check/:date?', async (req, res, next) => {
   res.sendStatus(200);
 });
 
-app.post('/:bitrixIncomingWebhook', async (req, res, next) => {
+app.post(`/${params.bitrixIncomingWebhook}`, async (req, res, next) => {
   const { body } = req;
 
   const bitrixEventType = crm.events[body.event];
