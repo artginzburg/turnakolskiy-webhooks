@@ -43,25 +43,36 @@ const crm = {
       const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
       // if (isEnvDevelopment) {
-      console.log('dealListUrl: ', dealListUrl);
+      console.log('dealListUrl:', dealListUrl);
       // }
 
-      try {
-        const apiResponse = await axios({
-          url: dealListUrl,
-        });
+      async function pushApiResponse(start, list) {
+        try {
+          const apiResponse = await axios({
+            url: start ? `${dealListUrl}&start=${start}` : dealListUrl,
+          });
 
-        // if (isEnvDevelopment) {
-        console.log('apiResponse: ', apiResponse);
-        // }
+          list.push(...apiResponse?.data?.result);
 
-        return apiResponse?.data?.result;
-      } catch (error) {
-        if (error) {
-          console.log(error?.data);
+          // if (isEnvDevelopment) {
+          console.log('next:', apiResponse?.data?.next);
+          // }
+          return apiResponse;
+        } catch (error) {
+          if (error) {
+            console.log(error?.data);
+          }
         }
-        return [];
       }
+
+      const dealList = [];
+      let next = 0; // basic (and max) quantity of bitrix deals in a pocket
+
+      while (next !== undefined) {
+        next = (await pushApiResponse(next, dealList)).data?.next;
+      }
+
+      return dealList;
     },
     productrows: {
       async get(req, ID) {
