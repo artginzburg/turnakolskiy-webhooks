@@ -10,8 +10,6 @@ if (!UPDATE_FROM_DATE) {
   return;
 }
 
-console.log(`Запускается принудительное обновление сделок с ${UPDATE_FROM_DATE}`);
-
 updateDeals({
   params: {
     bitrixIncomingWebhook: BITRIX_INCOMING_WEBHOOK,
