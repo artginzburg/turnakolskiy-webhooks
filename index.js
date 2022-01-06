@@ -33,6 +33,7 @@ const crm = {
       }
     },
     async list(req, date) {
+      // https://dev.1c-bitrix.ru/rest_help/general/lists.php
       const fromDate = date ? new Date(date) : yesterday();
       const formattedDate = fromDate.toLocaleString('ru-RU');
 
