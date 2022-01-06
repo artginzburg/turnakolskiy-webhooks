@@ -33,12 +33,10 @@ const crm = {
       }
     },
     async list(req, date) {
-      const fromDate = date ? new Date(date) : yesterday();
-      const formattedDate = fromDate.toLocaleString('ru-RU');
+      // const fromDate = date ? new Date(date) : yesterday();
+      // const formattedDate = fromDate.toLocaleString('ru-RU');
 
-      const searchParams = `filter[>DATE_MODIFY]=${stripSpaces(
-        formattedDate,
-      )}&select[]=*&select[]=UF_*`;
+      const searchParams = `filter[>DATE_MODIFY]=${date}&select[]=*&select[]=UF_*`;
 
       const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
@@ -58,6 +56,7 @@ const crm = {
         return apiResponse?.data?.result;
       } catch (error) {
         if (error) {
+          console.log(error);
           console.log(error?.data);
         }
         return [];
