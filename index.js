@@ -1,7 +1,7 @@
 const axios = require('axios');
 const express = require('express');
 
-const { logResult, yesterday, dateToUNIX } = require('./functions');
+const { logResult, yesterday, dateToUNIX, stripSpaces } = require('./functions');
 
 const { PORT = 3000, NODE_ENV } = process.env;
 
@@ -36,7 +36,9 @@ const crm = {
       const fromDate = date ? new Date(date) : yesterday();
       const formattedDate = fromDate.toLocaleString('ru-RU');
 
-      const searchParams = `filter[>DATE_MODIFY]=${formattedDate}&select[]=*&select[]=UF_*`;
+      const searchParams = `filter[>DATE_MODIFY]=${stripSpaces(
+        formattedDate,
+      )}&select[]=*&select[]=UF_*`;
 
       const dealListUrl = `${req.params.bitrixIncomingWebhook}crm.deal.list?${searchParams}`;
 
