@@ -11,7 +11,8 @@
   "repository": "https://github.com/artginzburg/turnakolskiy-webhooks",
   "scripts": {
     "start": "node index",
-    "test": "concurrently \"npm:start\" \"lt -p 3000\""
+    "test": "concurrently \"npm:start\" \"lt -p 3000\"",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
     "axios": "^0.23.0",
@@ -19,8 +20,11 @@
   },
   "devDependencies": {
     "concurrently": "^6.3.0",
-    "localtunnel": "^2.0.2",
+    "eslint": "^8.9.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.4",
     "express-winston": "^4.2.0",
+    "localtunnel": "^2.0.2",
     "winston": "^3.3.3"
   }
 }

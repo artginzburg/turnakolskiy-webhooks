@@ -1,7 +1,9 @@
 const axios = require('axios');
 const express = require('express');
 
-const { logResult, yesterday, dateToUNIX, stripSpaces } = require('./functions');
+const {
+  logResult, yesterday, dateToUNIX, stripSpaces,
+} = require('./functions');
 
 const { PORT = 3000, NODE_ENV } = process.env;
 
@@ -113,11 +115,11 @@ async function parseResult(req, result) {
       const rawItems = await crm.deal.productrows.get(req, ID);
       return rawItems.length
         ? rawItems.map((item) => ({
-            name: item.PRODUCT_NAME,
-            sku: String(item.PRODUCT_ID),
-            price: String(item.PRICE),
-            quantity: item.QUANTITY,
-          }))
+          name: item.PRODUCT_NAME,
+          sku: String(item.PRODUCT_ID),
+          price: String(item.PRICE),
+          quantity: item.QUANTITY,
+        }))
         : undefined;
     })(result.ID),
   };
